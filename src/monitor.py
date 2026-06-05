@@ -20,21 +20,24 @@ for pod in pods.items:
 
     for container in pod.status.container_statuses:
 
-        if container.state.waiting:
-            unhealthy_found = True
+        status = None
 
-            print(f"Namespace : {namespace}")
-            print(f"Pod       : {pod_name}")
-            print(f"Status    : {container.state.waiting.reason}")
-            print("-" * 50)
+        if container.state.waiting:
+            status = container.state.waiting.reason
 
         elif container.state.terminated:
+            status = container.state.terminated.reason
+
+        if status and status != "Completed":
+
             unhealthy_found = True
 
             print(f"Namespace : {namespace}")
             print(f"Pod       : {pod_name}")
-            print(f"Status    : {container.state.terminated.reason}")
-            print("-" * 50)
+            print(f"Container : {container.name}")
+            print(f"Status    : {status}")
+            print(f"Restarts  : {container.restart_count}")
+            print("-" * 60)
 
 if not unhealthy_found:
     print("No unhealthy pods found.")
