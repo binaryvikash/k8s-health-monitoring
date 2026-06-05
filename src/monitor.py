@@ -1,22 +1,40 @@
 from kubernetes import client, config
 
-# Load kubeconfig from local machine
 config.load_kube_config()
 
 v1 = client.CoreV1Api()
 
-print("\n=== Kubernetes Health Report ===\n")
-
 pods = v1.list_pod_for_all_namespaces()
+
+print("\n=== Unhealthy Pods Report ===\n")
+
+unhealthy_found = False
 
 for pod in pods.items:
 
-    pod_name = pod.metadata.name
     namespace = pod.metadata.namespace
-    phase = pod.status.phase
+    pod_name = pod.metadata.name
 
-    print(
-        f"Namespace: {namespace:<15} "
-        f"Pod: {pod_name:<35} "
-        f"Phase: {phase}"
-    )
+    if not pod.status.container_statuses:
+        continue
+
+    for container in pod.status.container_statuses:
+
+        if container.state.waiting:
+            unhealthy_found = True
+
+            print(f"Namespace : {namespace}")
+            print(f"Pod       : {pod_name}")
+            print(f"Status    : {container.state.waiting.reason}")
+            print("-" * 50)
+
+        elif container.state.terminated:
+            unhealthy_found = True
+
+            print(f"Namespace : {namespace}")
+            print(f"Pod       : {pod_name}")
+            print(f"Status    : {container.state.terminated.reason}")
+            print("-" * 50)
+
+if not unhealthy_found:
+    print("No unhealthy pods found.")
