@@ -1,4 +1,5 @@
 from kubernetes import client, config
+import json
 
 config.load_kube_config()
 
@@ -8,7 +9,7 @@ pods = v1.list_pod_for_all_namespaces()
 
 print("\n=== Unhealthy Pods Report ===\n")
 
-unhealthy_found = False
+unhealthy_pods = []
 
 for pod in pods.items:
 
@@ -30,7 +31,15 @@ for pod in pods.items:
 
         if status and status != "Completed":
 
-            unhealthy_found = True
+            pod_data = {
+                "namespace": namespace,
+                "pod": pod_name,
+                "container": container.name,
+                "status": status,
+                "restarts": container.restart_count
+            }
+
+            unhealthy_pods.append(pod_data)
 
             print(f"Namespace : {namespace}")
             print(f"Pod       : {pod_name}")
@@ -39,5 +48,11 @@ for pod in pods.items:
             print(f"Restarts  : {container.restart_count}")
             print("-" * 60)
 
-if not unhealthy_found:
+if not unhealthy_pods:
     print("No unhealthy pods found.")
+
+with open("reports/unhealthy_pods.json", "w") as file:
+    json.dump(unhealthy_pods, file, indent=4)
+
+print("\nJSON report generated:")
+print("reports/unhealthy_pods.json")
