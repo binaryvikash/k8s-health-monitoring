@@ -4,6 +4,10 @@ from config import SLACK_WEBHOOK_URL
 
 def send_slack_alert(message):
 
+    if not SLACK_WEBHOOK_URL:
+        print("Slack webhook URL not configured.")
+        return None
+
     payload = {
         "text": message
     }

@@ -6,3 +6,4 @@ __pycache__/
 .vscode/
 reports/*.json
 src/config.py
+.env
